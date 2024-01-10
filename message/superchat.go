@@ -1,7 +1,7 @@
 package message
 
 import (
-	"github.com/gedoy9793/blivedm-go/client"
+	"context"
 	"github.com/gedoy9793/blivedm-go/utils"
 	"github.com/tidwall/gjson"
 )
@@ -70,11 +70,12 @@ type SuperChat struct {
 	} `json:"user_info"`
 }
 
-func (s *SuperChat) Parse(c *client.Client, data []byte) {
+func (s *SuperChat) Parse(ctx context.Context, data []byte) {
+	logger := utils.GetLoggerFromContext(ctx)
 	sb := utils.BytesToString(data)
 	sd := gjson.Get(sb, "data").String()
 	err := utils.UnmarshalStr(sd, s)
 	if err != nil {
-		c.Config.Logger.Error("parse superchat failed")
+		logger.Error("parse superchat failed")
 	}
 }

@@ -1,7 +1,7 @@
 package message
 
 import (
-	"github.com/gedoy9793/blivedm-go/client"
+	"context"
 	"github.com/gedoy9793/blivedm-go/utils"
 	"github.com/tidwall/gjson"
 )
@@ -18,11 +18,12 @@ type GuardBuy struct {
 	EndTime    int    `json:"end_time"`
 }
 
-func (g *GuardBuy) Parse(c *client.Client, data []byte) {
+func (g *GuardBuy) Parse(ctx context.Context, data []byte) {
+	logger := utils.GetLoggerFromContext(ctx)
 	sb := utils.BytesToString(data)
 	sd := gjson.Get(sb, "data").String()
 	err := utils.UnmarshalStr(sd, g)
 	if err != nil {
-		c.Config.Logger.Error("parse GuardBuy failed")
+		logger.Error("parse GuardBuy failed")
 	}
 }

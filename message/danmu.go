@@ -1,7 +1,7 @@
 package message
 
 import (
-	"github.com/gedoy9793/blivedm-go/client"
+	"context"
 	"github.com/gedoy9793/blivedm-go/pb"
 	"github.com/gedoy9793/blivedm-go/utils"
 	"github.com/tidwall/gjson"
@@ -60,7 +60,8 @@ type (
 	}
 )
 
-func (d *Danmaku) Parse(c *client.Client, data []byte) {
+func (d *Danmaku) Parse(ctx context.Context, data []byte) {
+	logger := utils.GetLoggerFromContext(ctx)
 	sb := utils.BytesToString(data)
 	parsed := gjson.Parse(sb)
 	info := parsed.Get("info")
@@ -69,11 +70,11 @@ func (d *Danmaku) Parse(c *client.Client, data []byte) {
 	emo := new(Emoticon)
 	err := utils.UnmarshalStr(info.Get("0.15.extra").String(), ext)
 	if err != nil {
-		c.Config.Logger.Error("parse danmaku extra failed")
+		logger.Error("parse danmaku extra failed")
 	}
 	err = utils.UnmarshalStr(info.Get("0.13").String(), emo)
 	if err != nil {
-		c.Config.Logger.Error("parse danmaku emoticon failed")
+		logger.Error("parse danmaku emoticon failed")
 	}
 	i2 := info.Get("2")
 	i3 := info.Get("3")

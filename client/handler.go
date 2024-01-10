@@ -97,37 +97,37 @@ func (c *Client) Handle(p packet.Packet) {
 		switch cmd {
 		case "DANMU_MSG":
 			d := new(message.Danmaku)
-			d.Parse(c, p.Body)
+			d.Parse(c.ctx, p.Body)
 			for _, fn := range c.eventHandlers.danmakuMessageHandlers {
 				go cover(c, func() { fn(d) })
 			}
 		case "SUPER_CHAT_MESSAGE":
 			s := new(message.SuperChat)
-			s.Parse(c, p.Body)
+			s.Parse(c.ctx, p.Body)
 			for _, fn := range c.eventHandlers.superChatHandlers {
 				go cover(c, func() { fn(s) })
 			}
 		case "SEND_GIFT":
 			g := new(message.Gift)
-			g.Parse(c, p.Body)
+			g.Parse(c.ctx, p.Body)
 			for _, fn := range c.eventHandlers.giftHandlers {
 				go cover(c, func() { fn(g) })
 			}
 		case "GUARD_BUY":
 			g := new(message.GuardBuy)
-			g.Parse(c, p.Body)
+			g.Parse(c.ctx, p.Body)
 			for _, fn := range c.eventHandlers.guardBuyHandlers {
 				go cover(c, func() { fn(g) })
 			}
 		case "LIVE":
 			l := new(message.Live)
-			l.Parse(c, p.Body)
+			l.Parse(c.ctx, p.Body)
 			for _, fn := range c.eventHandlers.liveHandlers {
 				go cover(c, func() { fn(l) })
 			}
 		case "USER_TOAST_MSG":
 			u := new(message.UserToast)
-			u.Parse(c, p.Body)
+			u.Parse(c.ctx, p.Body)
 			for _, fn := range c.eventHandlers.userToastHandlers {
 				go cover(c, func() { fn(u) })
 			}

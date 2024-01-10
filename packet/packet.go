@@ -3,10 +3,11 @@ package packet
 import (
 	"bytes"
 	"compress/zlib"
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"github.com/andybalholm/brotli"
-	"github.com/gedoy9793/blivedm-go/client"
+	"github.com/gedoy9793/blivedm-go/utils"
 	"io"
 )
 
@@ -36,38 +37,40 @@ type Packet struct {
 	Operation       uint32
 	SequenceID      int
 	Body            []byte
-	client          *client.Client
+	ctx             context.Context
 }
 
-func NewPacket(c *client.Client, protocolVersion uint16, operation uint32, body []byte) Packet {
+func NewPacket(ctx context.Context, protocolVersion uint16, operation uint32, body []byte) Packet {
 	return Packet{
 		ProtocolVersion: protocolVersion,
 		Operation:       operation,
 		Body:            body,
-		client:          c,
+		ctx:             ctx,
 	}
 }
 
 // NewPlainPacket 构造新的 Plain 包
 // 对外暴露的方法中 operation 全部使用int
-func NewPlainPacket(c *client.Client, operation int, body []byte) Packet {
-	return NewPacket(c, 1, uint32(operation), body)
+func NewPlainPacket(ctx context.Context, operation int, body []byte) Packet {
+	return NewPacket(ctx, 1, uint32(operation), body)
 }
 
-func NewPacketFromBytes(c *client.Client, data []byte) Packet {
+func NewPacketFromBytes(ctx context.Context, data []byte) Packet {
+	logger := utils.GetLoggerFromContext(ctx)
 	packLen := binary.BigEndian.Uint32(data[0:4])
 	// 校验包长度
 	if int(packLen) != len(data) {
-		c.Config.Logger.Error("error packet")
+		logger.Error("error packet")
 	}
 	pv := binary.BigEndian.Uint16(data[6:8])
 	op := binary.BigEndian.Uint32(data[8:12])
 	body := data[16:packLen]
-	packet := NewPacket(c, pv, op, body)
+	packet := NewPacket(ctx, pv, op, body)
 	return packet
 }
 
 func (p Packet) Parse() []Packet {
+	logger := utils.GetLoggerFromContext(p.ctx)
 	switch p.ProtocolVersion {
 	case Popularity:
 		fallthrough
@@ -76,17 +79,17 @@ func (p Packet) Parse() []Packet {
 	case Zlib:
 		z, err := zlibParser(p.Body)
 		if err != nil {
-			p.client.Config.Logger.Error("zlib error", err)
+			logger.Error("zlib error", err)
 		}
-		return Slice(p.client, z)
+		return Slice(p.ctx, z)
 	case Brotli:
 		b, err := brotliParser(p.Body)
 		if err != nil {
-			p.client.Config.Logger.Error("brotli error", err)
+			logger.Error("brotli error", err)
 		}
-		return Slice(p.client, b)
+		return Slice(p.ctx, b)
 	default:
-		p.client.Config.Logger.Error("unknown protocolVersion")
+		logger.Error("unknown protocolVersion")
 	}
 	return nil
 }
@@ -116,8 +119,8 @@ func (p *Packet) Build() []byte {
 }
 
 // DecodePacket Decode
-func DecodePacket(c *client.Client, data []byte) Packet {
-	return NewPacketFromBytes(c, data)
+func DecodePacket(ctx context.Context, data []byte) Packet {
+	return NewPacketFromBytes(ctx, data)
 }
 
 // EncodePacket Encode
@@ -125,13 +128,13 @@ func EncodePacket(packet Packet) []byte {
 	return packet.Build()
 }
 
-func Slice(c *client.Client, data []byte) []Packet {
+func Slice(ctx context.Context, data []byte) []Packet {
 	var packets []Packet
 	total := len(data)
 	cursor := 0
 	for cursor < total {
 		packLen := int(binary.BigEndian.Uint32(data[cursor : cursor+4]))
-		packets = append(packets, DecodePacket(c, data[cursor:cursor+packLen]))
+		packets = append(packets, DecodePacket(ctx, data[cursor:cursor+packLen]))
 		cursor += packLen
 	}
 	return packets

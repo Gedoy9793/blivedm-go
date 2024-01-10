@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gedoy9793/blivedm-go/api"
 	"github.com/gedoy9793/blivedm-go/packet"
+	"github.com/gedoy9793/blivedm-go/utils"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -29,6 +30,7 @@ type Client struct {
 	cancel              context.CancelFunc
 	done                <-chan struct{}
 	Config              *Config
+	ctx                 context.Context
 }
 
 type Config struct {
@@ -46,6 +48,7 @@ func NewClient(roomID int, config *Config) *Client {
 		config.Logger = defaultLogger
 	}
 	ctx, cancel := context.WithCancel(context.Background())
+	ctx = utils.SetLoggerToContext(ctx, config.Logger)
 	return &Client{
 		RoomID:              roomID,
 		retryCount:          0,
@@ -53,6 +56,8 @@ func NewClient(roomID int, config *Config) *Client {
 		customEventHandlers: &customEventHandlers{},
 		done:                ctx.Done(),
 		cancel:              cancel,
+		Config:              config,
+		ctx:                 ctx,
 	}
 }
 
@@ -138,7 +143,7 @@ func (c *Client) wsLoop() {
 				c.Config.Logger.Error("packet not binary")
 				continue
 			}
-			for _, pkt := range packet.DecodePacket(c, data).Parse() {
+			for _, pkt := range packet.DecodePacket(c.ctx, data).Parse() {
 				go c.Handle(pkt)
 			}
 		}
@@ -146,7 +151,7 @@ func (c *Client) wsLoop() {
 }
 
 func (c *Client) heartBeatLoop() {
-	pkt := packet.NewHeartBeatPacket(c)
+	pkt := packet.NewHeartBeatPacket(c.ctx)
 	for {
 		select {
 		case <-c.done:
@@ -188,7 +193,7 @@ func (c *Client) UseDefaultHost() {
 }
 
 func (c *Client) sendEnterPacket() error {
-	pkt := packet.NewEnterPacket(c, c.Uid, c.Buvid, c.RoomID, c.token)
+	pkt := packet.NewEnterPacket(c.ctx, c.Uid, c.Buvid, c.RoomID, c.token)
 	if err := c.conn.WriteMessage(websocket.BinaryMessage, pkt); err != nil {
 		return err
 	}

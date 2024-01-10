@@ -1,8 +1,9 @@
 package message
 
 import (
+	"context"
 	"encoding/json"
-	"github.com/gedoy9793/blivedm-go/client"
+	"github.com/gedoy9793/blivedm-go/utils"
 )
 
 type StopLiveRoomList struct {
@@ -25,9 +26,10 @@ type Preparing struct {
 	Roomid string `json:"roomid"`
 }
 
-func (l *Live) Parse(c *client.Client, data []byte) {
+func (l *Live) Parse(ctx context.Context, data []byte) {
+	logger := utils.GetLoggerFromContext(ctx)
 	err := json.Unmarshal(data, l)
 	if err != nil {
-		c.Config.Logger.Error("parse live failed")
+		logger.Error("parse live failed")
 	}
 }

@@ -1,8 +1,9 @@
 package packet
 
 import (
+	"context"
 	"encoding/json"
-	"github.com/gedoy9793/blivedm-go/client"
+	"github.com/gedoy9793/blivedm-go/utils"
 )
 
 type Enter struct {
@@ -17,7 +18,8 @@ type Enter struct {
 
 // NewEnterPacket 构造进入房间的包
 // uid 可以为 0, key 在使用 broadcastlv 服务器的时候不需要
-func NewEnterPacket(c *client.Client, uid int, buvid string, roomID int, key string) []byte {
+func NewEnterPacket(ctx context.Context, uid int, buvid string, roomID int, key string) []byte {
+	logger := utils.GetLoggerFromContext(ctx)
 	ent := &Enter{
 		UID:      uid,
 		Buvid:    buvid,
@@ -29,8 +31,8 @@ func NewEnterPacket(c *client.Client, uid int, buvid string, roomID int, key str
 	}
 	m, err := json.Marshal(ent)
 	if err != nil {
-		c.Config.Logger.Error("NewEnterPacket JsonMarshal failed", err)
+		logger.Error("NewEnterPacket JsonMarshal failed", err)
 	}
-	pkt := NewPlainPacket(c, RoomEnter, m)
+	pkt := NewPlainPacket(ctx, RoomEnter, m)
 	return pkt.Build()
 }

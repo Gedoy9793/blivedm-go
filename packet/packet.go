@@ -5,8 +5,8 @@ import (
 	"compress/zlib"
 	"encoding/binary"
 	"encoding/json"
+	"github.com/Akegarasu/blivedm-go/client"
 	"github.com/andybalholm/brotli"
-	log "github.com/sirupsen/logrus"
 	"io"
 )
 
@@ -36,32 +36,34 @@ type Packet struct {
 	Operation       uint32
 	SequenceID      int
 	Body            []byte
+	client          *client.Client
 }
 
-func NewPacket(protocolVersion uint16, operation uint32, body []byte) Packet {
+func NewPacket(c *client.Client, protocolVersion uint16, operation uint32, body []byte) Packet {
 	return Packet{
 		ProtocolVersion: protocolVersion,
 		Operation:       operation,
 		Body:            body,
+		client:          c,
 	}
 }
 
 // NewPlainPacket 构造新的 Plain 包
 // 对外暴露的方法中 operation 全部使用int
-func NewPlainPacket(operation int, body []byte) Packet {
-	return NewPacket(1, uint32(operation), body)
+func NewPlainPacket(c *client.Client, operation int, body []byte) Packet {
+	return NewPacket(c, 1, uint32(operation), body)
 }
 
-func NewPacketFromBytes(data []byte) Packet {
+func NewPacketFromBytes(c *client.Client, data []byte) Packet {
 	packLen := binary.BigEndian.Uint32(data[0:4])
 	// 校验包长度
 	if int(packLen) != len(data) {
-		log.Error("error packet")
+		c.Config.Logger.Error("error packet")
 	}
 	pv := binary.BigEndian.Uint16(data[6:8])
 	op := binary.BigEndian.Uint32(data[8:12])
 	body := data[16:packLen]
-	packet := NewPacket(pv, op, body)
+	packet := NewPacket(c, pv, op, body)
 	return packet
 }
 
@@ -74,17 +76,17 @@ func (p Packet) Parse() []Packet {
 	case Zlib:
 		z, err := zlibParser(p.Body)
 		if err != nil {
-			log.Error("zlib error", err)
+			p.client.Config.Logger.Error("zlib error", err)
 		}
-		return Slice(z)
+		return Slice(p.client, z)
 	case Brotli:
 		b, err := brotliParser(p.Body)
 		if err != nil {
-			log.Error("brotli error", err)
+			p.client.Config.Logger.Error("brotli error", err)
 		}
-		return Slice(b)
+		return Slice(p.client, b)
 	default:
-		log.Error("unknown protocolVersion")
+		p.client.Config.Logger.Error("unknown protocolVersion")
 	}
 	return nil
 }
@@ -114,8 +116,8 @@ func (p *Packet) Build() []byte {
 }
 
 // DecodePacket Decode
-func DecodePacket(data []byte) Packet {
-	return NewPacketFromBytes(data)
+func DecodePacket(c *client.Client, data []byte) Packet {
+	return NewPacketFromBytes(c, data)
 }
 
 // EncodePacket Encode
@@ -123,13 +125,13 @@ func EncodePacket(packet Packet) []byte {
 	return packet.Build()
 }
 
-func Slice(data []byte) []Packet {
+func Slice(c *client.Client, data []byte) []Packet {
 	var packets []Packet
 	total := len(data)
 	cursor := 0
 	for cursor < total {
 		packLen := int(binary.BigEndian.Uint32(data[cursor : cursor+4]))
-		packets = append(packets, DecodePacket(data[cursor:cursor+packLen]))
+		packets = append(packets, DecodePacket(c, data[cursor:cursor+packLen]))
 		cursor += packLen
 	}
 	return packets

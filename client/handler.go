@@ -4,7 +4,6 @@ import (
 	"github.com/Akegarasu/blivedm-go/message"
 	"github.com/Akegarasu/blivedm-go/packet"
 	"github.com/Akegarasu/blivedm-go/utils"
-	log "github.com/sirupsen/logrus"
 	"regexp"
 	"runtime/debug"
 	"strings"
@@ -79,7 +78,7 @@ func (c *Client) OnPacket(f func(*packet.Packet)) {
 // Handle 处理一个包
 func (c *Client) Handle(p packet.Packet) {
 	for _, fn := range c.eventHandlers.packetHandlers {
-		go cover(func() { fn(&p) })
+		go cover(c, func() { fn(&p) })
 	}
 	switch p.Operation {
 	case packet.Notification:
@@ -92,56 +91,56 @@ func (c *Client) Handle(p packet.Packet) {
 		// 优先执行自定义 eventHandler ，会覆盖库内自带的 handler
 		f, ok := (*c.customEventHandlers)[cmd]
 		if ok {
-			go cover(func() { f(sb) })
+			go cover(c, func() { f(sb) })
 			return
 		}
 		switch cmd {
 		case "DANMU_MSG":
 			d := new(message.Danmaku)
-			d.Parse(p.Body)
+			d.Parse(c, p.Body)
 			for _, fn := range c.eventHandlers.danmakuMessageHandlers {
-				go cover(func() { fn(d) })
+				go cover(c, func() { fn(d) })
 			}
 		case "SUPER_CHAT_MESSAGE":
 			s := new(message.SuperChat)
-			s.Parse(p.Body)
+			s.Parse(c, p.Body)
 			for _, fn := range c.eventHandlers.superChatHandlers {
-				go cover(func() { fn(s) })
+				go cover(c, func() { fn(s) })
 			}
 		case "SEND_GIFT":
 			g := new(message.Gift)
-			g.Parse(p.Body)
+			g.Parse(c, p.Body)
 			for _, fn := range c.eventHandlers.giftHandlers {
-				go cover(func() { fn(g) })
+				go cover(c, func() { fn(g) })
 			}
 		case "GUARD_BUY":
 			g := new(message.GuardBuy)
-			g.Parse(p.Body)
+			g.Parse(c, p.Body)
 			for _, fn := range c.eventHandlers.guardBuyHandlers {
-				go cover(func() { fn(g) })
+				go cover(c, func() { fn(g) })
 			}
 		case "LIVE":
 			l := new(message.Live)
-			l.Parse(p.Body)
+			l.Parse(c, p.Body)
 			for _, fn := range c.eventHandlers.liveHandlers {
-				go cover(func() { fn(l) })
+				go cover(c, func() { fn(l) })
 			}
 		case "USER_TOAST_MSG":
 			u := new(message.UserToast)
-			u.Parse(p.Body)
+			u.Parse(c, p.Body)
 			for _, fn := range c.eventHandlers.userToastHandlers {
-				go cover(func() { fn(u) })
+				go cover(c, func() { fn(u) })
 			}
 		default:
 			if _, ok := knownCMDMap[cmd]; ok {
 				return
 			}
-			log.Debugf("unknown cmd(%s), body: %s", cmd, p.Body)
+			c.Config.Logger.Debugf("unknown cmd(%s), body: %s", cmd, p.Body)
 		}
 	case packet.HeartBeatResponse:
 	case packet.RoomEnterResponse:
 	default:
-		log.WithField("protover", p.ProtocolVersion).
+		c.Config.Logger.WithField("protover", p.ProtocolVersion).
 			WithField("data", string(p.Body)).
 			Warn("unknown protover")
 	}
@@ -158,10 +157,10 @@ func ParseCmd(d []byte) string {
 	return ""
 }
 
-func cover(f func()) {
+func cover(c *Client, f func()) {
 	defer func() {
 		if pan := recover(); pan != nil {
-			log.Errorf("event error: %v\n%s", pan, debug.Stack())
+			c.Config.Logger.Errorf("event error: %v\n%s", pan, debug.Stack())
 		}
 	}()
 	f()

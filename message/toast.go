@@ -1,8 +1,8 @@
 package message
 
 import (
+	"github.com/Akegarasu/blivedm-go/client"
 	"github.com/Akegarasu/blivedm-go/utils"
-	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
@@ -32,11 +32,11 @@ type UserToast struct {
 	Username         string `json:"username"`
 }
 
-func (u *UserToast) Parse(data []byte) {
+func (u *UserToast) Parse(c *client.Client, data []byte) {
 	sb := utils.BytesToString(data)
 	sd := gjson.Get(sb, "data").String()
 	err := utils.UnmarshalStr(sd, u)
 	if err != nil {
-		log.Error("parse UserToast failed")
+		c.Config.Logger.Error("parse UserToast failed")
 	}
 }

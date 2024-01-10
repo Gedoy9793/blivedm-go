@@ -1,8 +1,8 @@
 package message
 
 import (
+	"github.com/Akegarasu/blivedm-go/client"
 	"github.com/Akegarasu/blivedm-go/utils"
-	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
@@ -109,11 +109,11 @@ type ComboSend struct {
 	Uname      string      `json:"uname"`
 }
 
-func (g *Gift) Parse(data []byte) {
+func (g *Gift) Parse(c *client.Client, data []byte) {
 	sb := utils.BytesToString(data)
 	sd := gjson.Get(sb, "data").String()
 	err := utils.UnmarshalStr(sd, g)
 	if err != nil {
-		log.Error("parse Gift failed")
+		c.Config.Logger.Error("parse Gift failed")
 	}
 }

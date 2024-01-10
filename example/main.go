@@ -2,18 +2,18 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/Akegarasu/blivedm-go/api"
 	"github.com/Akegarasu/blivedm-go/client"
 	"github.com/Akegarasu/blivedm-go/message"
 	_ "github.com/Akegarasu/blivedm-go/utils"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
 func main() {
-	log.SetLevel(log.DebugLevel)
-	c := client.NewClient(6)
+	log := logrus.New()
+	log.SetLevel(logrus.DebugLevel)
+	c := client.NewClient(6, &client.Config{Logger: log})
 	c.SetCookie("this is a example cookie.")
 	//弹幕事件
 	c.OnDanmaku(func(danmaku *message.Danmaku) {

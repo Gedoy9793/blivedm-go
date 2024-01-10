@@ -2,7 +2,7 @@ package message
 
 import (
 	"encoding/json"
-	log "github.com/sirupsen/logrus"
+	"github.com/Akegarasu/blivedm-go/client"
 )
 
 type StopLiveRoomList struct {
@@ -25,9 +25,9 @@ type Preparing struct {
 	Roomid string `json:"roomid"`
 }
 
-func (l *Live) Parse(data []byte) {
+func (l *Live) Parse(c *client.Client, data []byte) {
 	err := json.Unmarshal(data, l)
 	if err != nil {
-		log.Error("parse live failed")
+		c.Config.Logger.Error("parse live failed")
 	}
 }

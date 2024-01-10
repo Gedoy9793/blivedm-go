@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/Akegarasu/blivedm-go/api"
-	"github.com/Akegarasu/blivedm-go/client"
-	"github.com/Akegarasu/blivedm-go/message"
-	_ "github.com/Akegarasu/blivedm-go/utils"
+	"github.com/gedoy9793/blivedm-go/api"
+	"github.com/gedoy9793/blivedm-go/client"
+	"github.com/gedoy9793/blivedm-go/message"
+	_ "github.com/gedoy9793/blivedm-go/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )

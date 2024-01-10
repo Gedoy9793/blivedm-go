@@ -1,6 +1,6 @@
 package packet
 
-import "github.com/Akegarasu/blivedm-go/client"
+import "github.com/gedoy9793/blivedm-go/client"
 
 // NewHeartBeatPacket 构造心跳包
 func NewHeartBeatPacket(c *client.Client) []byte {

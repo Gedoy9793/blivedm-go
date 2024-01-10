@@ -5,8 +5,8 @@ import (
 	"compress/zlib"
 	"encoding/binary"
 	"encoding/json"
-	"github.com/Akegarasu/blivedm-go/client"
 	"github.com/andybalholm/brotli"
+	"github.com/gedoy9793/blivedm-go/client"
 	"io"
 )
 

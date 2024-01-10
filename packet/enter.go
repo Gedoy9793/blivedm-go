@@ -2,7 +2,7 @@ package packet
 
 import (
 	"encoding/json"
-	"github.com/Akegarasu/blivedm-go/client"
+	"github.com/gedoy9793/blivedm-go/client"
 )
 
 type Enter struct {

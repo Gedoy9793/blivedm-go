@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 
-	"github.com/Akegarasu/blivedm-go/client"
-	_ "github.com/Akegarasu/blivedm-go/utils"
+	"github.com/gedoy9793/blivedm-go/client"
+	_ "github.com/gedoy9793/blivedm-go/utils"
 	"github.com/tidwall/gjson"
 )
 

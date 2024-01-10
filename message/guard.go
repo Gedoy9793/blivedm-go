@@ -1,8 +1,8 @@
 package message
 
 import (
-	"github.com/Akegarasu/blivedm-go/client"
-	"github.com/Akegarasu/blivedm-go/utils"
+	"github.com/gedoy9793/blivedm-go/client"
+	"github.com/gedoy9793/blivedm-go/utils"
 	"github.com/tidwall/gjson"
 )
 

@@ -23,6 +23,7 @@ type eventHandlers struct {
 	guardBuyHandlers       []func(*message.GuardBuy)
 	liveHandlers           []func(*message.Live)
 	userToastHandlers      []func(*message.UserToast)
+	packetHandlers         []func(*packet.Packet)
 }
 
 type customEventHandlers map[string]func(s string)
@@ -71,11 +72,18 @@ func (c *Client) OnUserToast(f func(*message.UserToast)) {
 	c.eventHandlers.userToastHandlers = append(c.eventHandlers.userToastHandlers, f)
 }
 
+func (c *Client) OnPacket(f func(*packet.Packet)) {
+	c.eventHandlers.packetHandlers = append(c.eventHandlers.packetHandlers, f)
+}
+
 // Handle 处理一个包
 func (c *Client) Handle(p packet.Packet) {
+	for _, fn := range c.eventHandlers.packetHandlers {
+		go cover(func() { fn(&p) })
+	}
 	switch p.Operation {
 	case packet.Notification:
-		cmd := parseCmd(p.Body)
+		cmd := ParseCmd(p.Body)
 		sb := utils.BytesToString(p.Body)
 		// 新的弹幕 cmd 可能带参数
 		if ind := strings.Index(cmd, ":"); ind >= 0 {
@@ -139,8 +147,8 @@ func (c *Client) Handle(p packet.Packet) {
 	}
 }
 
-// parseCmd 获取 JSON 报文的 CMD
-func parseCmd(d []byte) string {
+// ParseCmd 获取 JSON 报文的 CMD
+func ParseCmd(d []byte) string {
 	// {"cmd":"DANMU_MSG", ...
 	str := utils.BytesToString(d)
 	match := cmdReg.FindStringSubmatch(str)

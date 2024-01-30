@@ -23,6 +23,7 @@ type eventHandlers struct {
 	liveHandlers           []func(*message.Live)
 	userToastHandlers      []func(*message.UserToast)
 	packetHandlers         []func(*packet.Packet)
+	rawDataHandlers        []func(*[]byte)
 }
 
 type customEventHandlers map[string]func(s string)
@@ -73,6 +74,10 @@ func (c *Client) OnUserToast(f func(*message.UserToast)) {
 
 func (c *Client) OnPacket(f func(*packet.Packet)) {
 	c.eventHandlers.packetHandlers = append(c.eventHandlers.packetHandlers, f)
+}
+
+func (c *Client) OnRawPackage(f func(*[]byte)) {
+	c.eventHandlers.rawDataHandlers = append(c.eventHandlers.rawDataHandlers, f)
 }
 
 // Handle 处理一个包

@@ -44,8 +44,7 @@ func NewClient(roomID int, config *Config) *Client {
 		config.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36"
 	}
 	if config.Logger == nil {
-		defaultLogger := logrus.New()
-		config.Logger = defaultLogger
+		config.Logger = logrus.StandardLogger()
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	ctx = utils.SetLoggerToContext(ctx, config.Logger)
@@ -142,6 +141,9 @@ func (c *Client) wsLoop() {
 			if msgType != websocket.BinaryMessage {
 				c.Config.Logger.Error("packet not binary")
 				continue
+			}
+			for _, fn := range c.eventHandlers.rawDataHandlers {
+				go cover(c, func() { fn(&data) })
 			}
 			for _, pkt := range packet.DecodePacket(c.ctx, data).Parse() {
 				go c.Handle(pkt)
